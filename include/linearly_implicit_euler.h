@@ -15,12 +15,17 @@
 //Output:
 //  q - set q to the updated generalized coordinate using linearly implicit time integration
 //  qdot - set qdot to the updated generalized velocity using linearly implicit time integration
-template<typename FORCE, typename STIFFNESS> 
-inline void linearly_implicit_euler(Eigen::VectorXd &q, Eigen::VectorXd &qdot, double dt, 
-                            const Eigen::SparseMatrixd &mass,  FORCE &force, STIFFNESS &stiffness, 
-                            Eigen::VectorXd &tmp_force, Eigen::SparseMatrixd &tmp_stiffness) {
-    
-    
-
-
+template<typename FORCE, typename STIFFNESS>
+inline void linearly_implicit_euler(Eigen::VectorXd &q, Eigen::VectorXd &qdot, double dt,
+                                    const Eigen::SparseMatrixd &mass, FORCE &force, STIFFNESS &stiffness,
+                                    Eigen::VectorXd &tmp_force, Eigen::SparseMatrixd &tmp_stiffness) {
+    // eqn is A qdot = b, where A = M - dt^2 K and b = Mqdot + dt f(q)
+    // solve for qdot by solving sparse system
+    Eigen::SimplicialLDLT<Eigen::SparseMatrix<double>> solver;
+    stiffness(tmp_stiffness, q, qdot);
+    solver.compute(mass - dt * dt * tmp_stiffness);
+    force(tmp_force, q, qdot);
+    qdot = solver.solve(mass * qdot + dt * tmp_force);
+    // update q using updated qdot
+    q = q + dt * qdot;
 }
