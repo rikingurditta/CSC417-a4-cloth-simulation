@@ -84,5 +84,6 @@ void dV_membrane_corotational_dq(Eigen::Vector9d &dV, Eigen::Ref<const Eigen::Ve
     B.block<3, 1>(0, 9) = dphi.block<1, 3>(3, 0);
     B.block<3, 1>(3, 10) = dphi.block<1, 3>(3, 0);
     B.block<3, 1>(6, 11) = dphi.block<1, 3>(3, 0);
-    dV = B.transpose() * dpsi_vector;
+    // including thickness factor 1 * as a reminder that our model is volumetric
+    dV = 1 * area * B.transpose() * dpsi_vector;
 }
