@@ -10,7 +10,9 @@ void mass_matrix_mesh(Eigen::SparseMatrixd &M, Eigen::Ref<const Eigen::VectorXd>
         Eigen::Matrix99d M_curr = Eigen::Matrix3d::Zero();
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
-                M_curr.block<3, 3>(i * 3, j * 3) = Eigen::Matrix3d::Identity() * density * areas(i) / 12;
+                // * 1 to remind us that our model is actually volumetric with a thickness of 1
+                M_curr.block<3, 3>(i * 3, j * 3)
+                        = Eigen::Matrix3d::Identity() * density * areas(i) * 1 / 12;
             }
         }
         // every entry is density * area / 12, except diagonal which is density * area / 6
