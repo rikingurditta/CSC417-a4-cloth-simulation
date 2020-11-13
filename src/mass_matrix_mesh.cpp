@@ -7,7 +7,7 @@ void mass_matrix_mesh(Eigen::SparseMatrixd &M, Eigen::Ref<const Eigen::VectorXd>
     tl.reserve(27 * F.rows());
     for (int tri = 0; tri < F.rows(); tri++) {
         // build mass matrix for current triangle
-        Eigen::Matrix99d M_curr = Eigen::Matrix3d::Zero();
+        Eigen::Matrix99d M_curr = Eigen::Matrix99d::Zero();
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
                 // * 1 to remind us that our model is actually volumetric with a thickness of 1
