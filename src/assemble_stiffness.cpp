@@ -7,7 +7,7 @@ assemble_stiffness(Eigen::SparseMatrixd &K, Eigen::Ref<const Eigen::VectorXd> q,
                    Eigen::Ref<const Eigen::MatrixXi> F, Eigen::Ref<const Eigen::VectorXd> a0,
                    double mu, double lambda) {
     K.setZero();
-    K.resize(V.rows(), V.rows());
+    K.resize(q.rows(), q.rows());
     std::vector<Eigen::Triplet<double>> tl;
     tl.reserve(81 * F.rows());
     for (int tri = 0; tri < F.rows(); tri++) {

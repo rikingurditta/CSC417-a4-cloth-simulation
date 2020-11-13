@@ -6,6 +6,7 @@ void assemble_forces(Eigen::VectorXd &f, Eigen::Ref<const Eigen::VectorXd> q, Ei
                      Eigen::Ref<const Eigen::MatrixXi> F, Eigen::Ref<const Eigen::VectorXd> a0,
                      double mu, double lambda) {
     f.setZero();
+    f.resize(q.rows());
     for (int tri = 0; tri < F.rows(); tri++) {
         // get -force for current triangle
         Eigen::Vector9d dV_tri = Eigen::Vector9d::Zero();
