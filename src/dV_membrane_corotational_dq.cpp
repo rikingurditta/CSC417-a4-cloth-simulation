@@ -2,6 +2,8 @@
 #include "dphi_cloth_triangle_dX.h"
 #include <iostream>
 
+Eigen::Matrix3d cross_product_matrix(Eigen::Ref<const Eigen::Vector3d> v);
+
 void dV_membrane_corotational_dq(Eigen::Vector9d &dV, Eigen::Ref<const Eigen::VectorXd> q,
                                  Eigen::Ref<const Eigen::Matrix3d> dX,
                                  Eigen::Ref<const Eigen::MatrixXd> V, Eigen::Ref<const Eigen::RowVectorXi> element,
@@ -15,7 +17,8 @@ void dV_membrane_corotational_dq(Eigen::Vector9d &dV, Eigen::Ref<const Eigen::Ve
     xs.col(0) = q.segment(x0 * 3, 3);
     xs.col(1) = q.segment(x1 * 3, 3);
     xs.col(2) = q.segment(x2 * 3, 3);
-    xs.col(3) = (xs.col(1) - xs.col(0)).cross(xs.col(2) - xs.col(0));
+    Eigen::Vector3d N = (xs.col(1) - xs.col(0)).cross(xs.col(2) - xs.col(0));
+    xs.col(3) = N;
     Eigen::Matrix43d r;
     Eigen::Matrix3d dphi;
     Eigen::Vector3d X;  // doesn't actually matter, gradient is constant over triangle
@@ -23,7 +26,8 @@ void dV_membrane_corotational_dq(Eigen::Vector9d &dV, Eigen::Ref<const Eigen::Ve
     r.block<3, 3>(0, 0) = dphi;
     Eigen::Vector3d delta_x1 = V.row(x1) - V.row(x0);
     Eigen::Vector3d delta_x2 = V.row(x2) - V.row(x0);
-    r.block<1, 3>(3, 0) = (delta_x1).cross(delta_x2);
+    Eigen::Vector3d ntilde = delta_x1.cross(delta_x2);
+    r.block<1, 3>(3, 0) = ntilde;
     Eigen::Matrix3d F = xs * r;
 
     Eigen::Matrix3d dx; //deformed tangent matrix 
@@ -70,8 +74,8 @@ void dV_membrane_corotational_dq(Eigen::Vector9d &dV, Eigen::Ref<const Eigen::Ve
     dpsi_vector.segment(3, 3) = dpsi_dF.block<3, 1>(1, 0);
     dpsi_vector.segment(6, 3) = dpsi_dF.block<3, 1>(2, 0);
 
-    // B = dF/dq (taken from last assignment)
-    Eigen::MatrixXd B = Eigen::MatrixXd::Zero(9, 12);
+    // create matrix based on derivative of shape functions
+    Eigen::Matrix99d B = Eigen::Matrix99d::Zero();
     B.block<3, 1>(0, 0) = dphi.block<1, 3>(0, 0);
     B.block<3, 1>(3, 1) = dphi.block<1, 3>(0, 0);
     B.block<3, 1>(6, 2) = dphi.block<1, 3>(0, 0);
@@ -80,10 +84,31 @@ void dV_membrane_corotational_dq(Eigen::Vector9d &dV, Eigen::Ref<const Eigen::Ve
     B.block<3, 1>(6, 5) = dphi.block<1, 3>(1, 0);
     B.block<3, 1>(0, 6) = dphi.block<1, 3>(2, 0);
     B.block<3, 1>(3, 7) = dphi.block<1, 3>(2, 0);
-    B.block<3, 1>(6, 8) = dphi.block<1, 3>(2, 0);
-    B.block<3, 1>(0, 9) = dphi.block<1, 3>(3, 0);
-    B.block<3, 1>(3, 10) = dphi.block<1, 3>(3, 0);
-    B.block<3, 1>(6, 11) = dphi.block<1, 3>(3, 0);
+    Eigen::Vector3d n = ntilde.normalized();
+    Eigen::Matrix39d c1 = Eigen::Matrix39d::Zero();
+    c1.block<3, 3>(0, 0) = -Eigen::Matrix3d::Identity();
+    c1.block<3, 3>(0, 6) = Eigen::Matrix3d::Identity();
+    Eigen::Matrix39d c2 = Eigen::Matrix39d::Zero();
+    c2.block<3, 3>(0, 0) = -Eigen::Matrix3d::Identity();
+    c2.block<3, 3>(0, 3) = Eigen::Matrix3d::Identity();
+    Eigen::Matrix39d Nu = 1 / ntilde.norm() * (Eigen::Matrix3d::Identity() - n * n.transpose())
+                         * (cross_product_matrix(delta_x1) * c1 - cross_product_matrix(delta_x2) * c2);
+    // create matrix of N, as in video
+    Eigen::Matrix93d N_matrix = Eigen::Matrix93d::Zero();
+    N.block<3, 1>(0, 0) = N;
+    N.block<3, 1>(3, 1) = N;
+    N.block<3, 1>(6, 2) = N;
+
     // including thickness factor 1 * as a reminder that our model is volumetric
-    dV = 1 * area * B.transpose() * dpsi_vector;
+    dV = 1 * area * (B.transpose() + N_matrix * Nu) * dpsi_vector;
+}
+
+// return a cross product matrix for a given vector, i.e. given v return [v] so that [v] * w = v.cross(w)
+Eigen::Matrix3d cross_product_matrix(Eigen::Ref<const Eigen::Vector3d> v) {
+    Eigen::Matrix3d out = Eigen::Matrix3d::Zero();
+    out(0, 1) = -v(2);
+    out(0, 2) = v(1);
+    out(1, 2) = -v(0);
+    out -= out.transpose();  // skew-symmetric
+    return out;
 }
