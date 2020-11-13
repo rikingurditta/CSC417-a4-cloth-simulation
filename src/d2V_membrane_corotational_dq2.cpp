@@ -126,7 +126,8 @@ void d2V_membrane_corotational_dq2(Eigen::Matrix99d &H, Eigen::Ref<const Eigen::
     N.block<3, 1>(3, 1) = N;
     N.block<3, 1>(6, 2) = N;
     Eigen::Matrix99d dF_dq = B + N_matrix * Nu;
-    H = dF_dq.transpose() * d2psi_dF2 * dF_dq;
+    // including thickness factor 1 * as a reminder that our model is volumetric
+    H = 1 * area * dF_dq.transpose() * d2psi_dF2 * dF_dq;
 
     //fix errant eigenvalues
     Eigen::SelfAdjointEigenSolver<Eigen::Matrix99d> es(H);
