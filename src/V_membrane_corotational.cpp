@@ -20,7 +20,9 @@ void V_membrane_corotational(double &energy, Eigen::Ref<const Eigen::VectorXd> q
     Eigen::Vector3d X;  // doesn't actually matter, gradient is constant over triangle
     dphi_cloth_triangle_dX(dphi, V, element, X);
     r.block<3, 3>(0, 0) = dphi;
-    r.block<1, 3>(3, 0) = (V.row(x1) - V.row(x0)).cross(V.row(x2) - V.row(x0));
+    Eigen::Vector3d delta_x1 = V.row(x1) - V.row(x0);
+    Eigen::Vector3d delta_x2 = V.row(x2) - V.row(x0);
+    r.block<1, 3>(3, 0) = (delta_x1).cross(delta_x2);
     Eigen::Matrix3d F = xs * r;
     // get singular values of F
     Eigen::JacobiSVD<Eigen::Matrix3d> svd(F, Eigen::ComputeFullU | Eigen::ComputeFullV);
