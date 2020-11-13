@@ -96,7 +96,7 @@ void d2V_membrane_corotational_dq2(Eigen::Matrix99d &H, Eigen::Ref<const Eigen::
     for (int i = 0; i < 3; i++) {
         for (int j = 0; j < 3; j++) {
             d2psi_dF2.block<3, 3>(i * 3, j * 3) = dU[i][j] * dpsi_ds * W.transpose()
-                                                  + U * d2psi_ds2 * dS[i][j].asDiagonal() * W.transpose()
+                                                  + U * (d2psi_ds2 * dS[i][j]).asDiagonal() * W.transpose()
                                                   + U * dpsi_ds * dW[i][j].transpose();
         }
     }
