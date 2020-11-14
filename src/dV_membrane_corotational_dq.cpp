@@ -17,8 +17,9 @@ void dV_membrane_corotational_dq(Eigen::Vector9d &dV, Eigen::Ref<const Eigen::Ve
     xs.col(0) = q.segment(x0 * 3, 3);
     xs.col(1) = q.segment(x1 * 3, 3);
     xs.col(2) = q.segment(x2 * 3, 3);
-    Eigen::Vector3d N = (xs.col(1) - xs.col(0)).cross(xs.col(2) - xs.col(0));
-    xs.col(3) = N;
+    Eigen::Vector3d ntilde = (xs.col(1) - xs.col(0)).cross(xs.col(2) - xs.col(0));
+    Eigen::Vector3d n = ntilde.normalized();
+    xs.col(3) = n;
     Eigen::Matrix43d r;
     Eigen::Matrix3d dphi;
     Eigen::Vector3d X;  // doesn't actually matter, gradient is constant over triangle
@@ -26,8 +27,8 @@ void dV_membrane_corotational_dq(Eigen::Vector9d &dV, Eigen::Ref<const Eigen::Ve
     r.block<3, 3>(0, 0) = dphi;
     Eigen::Vector3d delta_x1 = V.row(x1) - V.row(x0);
     Eigen::Vector3d delta_x2 = V.row(x2) - V.row(x0);
-    Eigen::Vector3d ntilde = delta_x1.cross(delta_x2);
-    r.block<1, 3>(3, 0) = ntilde;
+    Eigen::Vector3d N = delta_x1.cross(delta_x2).normalized();
+    r.block<1, 3>(3, 0) = N;
     Eigen::Matrix3d F = xs * r;
 
     Eigen::Matrix3d dx; //deformed tangent matrix 
@@ -85,7 +86,6 @@ void dV_membrane_corotational_dq(Eigen::Vector9d &dV, Eigen::Ref<const Eigen::Ve
     B.block<3, 1>(0, 6) = dphi.block<1, 3>(2, 0);
     B.block<3, 1>(3, 7) = dphi.block<1, 3>(2, 0);
     B.block<3, 1>(3, 8) = dphi.block<1, 3>(2, 0);
-    Eigen::Vector3d n = ntilde.normalized();
     Eigen::Matrix39d c1 = Eigen::Matrix39d::Zero();
     c1.block<3, 3>(0, 0) = -Eigen::Matrix3d::Identity();
     c1.block<3, 3>(0, 6) = Eigen::Matrix3d::Identity();
