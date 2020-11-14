@@ -2,7 +2,7 @@
 #include "dphi_cloth_triangle_dX.h"
 #include <iostream>
 
-Eigen::Matrix3d cross_product_matrix_2(Eigen::Ref<const Eigen::Vector3d> v);
+Eigen::Matrix3d cross_product_matrix_2(const Eigen::Ref<const Eigen::Vector3d> &v);
 
 void d2V_membrane_corotational_dq2(Eigen::Matrix99d &H, Eigen::Ref<const Eigen::VectorXd> q,
                                    Eigen::Ref<const Eigen::Matrix3d> dX, Eigen::Ref<const Eigen::MatrixXd> V,
@@ -148,7 +148,7 @@ void d2V_membrane_corotational_dq2(Eigen::Matrix99d &H, Eigen::Ref<const Eigen::
 
 // TODO: figure out function naming business
 // return a cross product matrix for a given vector, i.e. given v return [v] so that [v] * w = v.cross(w)
-Eigen::Matrix3d cross_product_matrix_2(Eigen::Ref<const Eigen::Vector3d> v) {
+Eigen::Matrix3d cross_product_matrix_2(const Eigen::Ref<const Eigen::Vector3d> &v) {
     Eigen::Matrix3d out = Eigen::Matrix3d::Zero();
     out(0, 1) = -v(2);
     out(1, 0) = v(2);
