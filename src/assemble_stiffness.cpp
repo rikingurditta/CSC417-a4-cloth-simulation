@@ -13,7 +13,8 @@ assemble_stiffness(Eigen::SparseMatrixd &K, Eigen::Ref<const Eigen::VectorXd> q,
     for (int tri = 0; tri < F.rows(); tri++) {
         // get -K for current triangle
         Eigen::Matrix99d d2V_tri = Eigen::Matrix99d::Zero();
-        d2V_membrane_corotational_dq2(d2V_tri, q, dX, V, F.row(tri), a0(tri), mu, lambda);
+        Eigen::Matrix3d dx;
+        d2V_membrane_corotational_dq2(d2V_tri, q, dx, V, F.row(tri), a0(tri), mu, lambda);
         // distribute to global K
         for (int tri_i = 0; tri_i < 3; tri_i++) {
             for (int tri_j = 0; tri_j < 3; tri_j++) {

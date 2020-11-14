@@ -68,11 +68,11 @@ void dV_membrane_corotational_dq(Eigen::Vector9d &dV, Eigen::Ref<const Eigen::Ve
     dpsi_ds(0, 0) = lambda * (s0 + s1 + s2 - 3.) + mu * 2 * (s0 - 1.);
     dpsi_ds(1, 1) = lambda * (s0 + s1 + s2 - 3.) + mu * 2 * (s1 - 1.);
     dpsi_ds(2, 2) = lambda * (s0 + s1 + s2 - 3.) + mu * 2 * (s2 - 1.);
-    Eigen::Matrix3d dpsi_dF = U * dpsi_ds * V.transpose();
+    Eigen::Matrix3d dpsi_dF = U * dpsi_ds * W.transpose();
     Eigen::Vector9d dpsi_vector;
     dpsi_vector.segment(0, 3) = dpsi_dF.block<3, 1>(0, 0);
-    dpsi_vector.segment(3, 3) = dpsi_dF.block<3, 1>(1, 0);
-    dpsi_vector.segment(6, 3) = dpsi_dF.block<3, 1>(2, 0);
+    dpsi_vector.segment(3, 3) = dpsi_dF.block<3, 1>(0, 1);
+    dpsi_vector.segment(6, 3) = dpsi_dF.block<3, 1>(0, 2);
 
     // create matrix based on derivative of shape functions
     Eigen::Matrix99d B = Eigen::Matrix99d::Zero();
@@ -84,6 +84,7 @@ void dV_membrane_corotational_dq(Eigen::Vector9d &dV, Eigen::Ref<const Eigen::Ve
     B.block<3, 1>(6, 5) = dphi.block<1, 3>(1, 0);
     B.block<3, 1>(0, 6) = dphi.block<1, 3>(2, 0);
     B.block<3, 1>(3, 7) = dphi.block<1, 3>(2, 0);
+    B.block<3, 1>(3, 8) = dphi.block<1, 3>(2, 0);
     Eigen::Vector3d n = ntilde.normalized();
     Eigen::Matrix39d c1 = Eigen::Matrix39d::Zero();
     c1.block<3, 3>(0, 0) = -Eigen::Matrix3d::Identity();
@@ -95,9 +96,9 @@ void dV_membrane_corotational_dq(Eigen::Vector9d &dV, Eigen::Ref<const Eigen::Ve
                          * (cross_product_matrix(delta_x1) * c1 - cross_product_matrix(delta_x2) * c2);
     // create matrix of N, as in video
     Eigen::Matrix93d N_matrix = Eigen::Matrix93d::Zero();
-    N.block<3, 1>(0, 0) = N;
-    N.block<3, 1>(3, 1) = N;
-    N.block<3, 1>(6, 2) = N;
+    N_matrix.block<3, 1>(0, 0) = N;
+    N_matrix.block<3, 1>(3, 1) = N;
+    N_matrix.block<3, 1>(6, 2) = N;
 
     // including thickness factor 1 * as a reminder that our model is volumetric
     dV = 1 * area * (B + N_matrix * Nu) * dpsi_vector;
@@ -107,8 +108,10 @@ void dV_membrane_corotational_dq(Eigen::Vector9d &dV, Eigen::Ref<const Eigen::Ve
 Eigen::Matrix3d cross_product_matrix(Eigen::Ref<const Eigen::Vector3d> v) {
     Eigen::Matrix3d out = Eigen::Matrix3d::Zero();
     out(0, 1) = -v(2);
+    out(1, 0) = v(2);
     out(0, 2) = v(1);
+    out(2, 0) = -v(1);
     out(1, 2) = -v(0);
-    out -= out.transpose();  // skew-symmetric
+    out(2, 1) = v(0);
     return out;
 }

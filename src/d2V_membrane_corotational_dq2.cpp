@@ -123,9 +123,9 @@ void d2V_membrane_corotational_dq2(Eigen::Matrix99d &H, Eigen::Ref<const Eigen::
                           * (cross_product_matrix_2(delta_x1) * c1 - cross_product_matrix_2(delta_x2) * c2);
     // create matrix of N, as in video
     Eigen::Matrix93d N_matrix = Eigen::Matrix93d::Zero();
-    N.block<3, 1>(0, 0) = N;
-    N.block<3, 1>(3, 1) = N;
-    N.block<3, 1>(6, 2) = N;
+    N_matrix.block<3, 1>(0, 0) = N;
+    N_matrix.block<3, 1>(3, 1) = N;
+    N_matrix.block<3, 1>(6, 2) = N;
     Eigen::Matrix99d dF_dq = B + N_matrix * Nu;
     // including thickness factor 1 * as a reminder that our model is volumetric
     H = 1 * area * dF_dq.transpose() * d2psi_dF2 * dF_dq;
@@ -151,8 +151,10 @@ void d2V_membrane_corotational_dq2(Eigen::Matrix99d &H, Eigen::Ref<const Eigen::
 Eigen::Matrix3d cross_product_matrix_2(Eigen::Ref<const Eigen::Vector3d> v) {
     Eigen::Matrix3d out = Eigen::Matrix3d::Zero();
     out(0, 1) = -v(2);
+    out(1, 0) = v(2);
     out(0, 2) = v(1);
+    out(2, 0) = -v(1);
     out(1, 2) = -v(0);
-    out -= out.transpose();  // skew-symmetric
+    out(2, 1) = v(0);
     return out;
 }
