@@ -75,24 +75,29 @@ void d2V_membrane_corotational_dq2(Eigen::Matrix99d &H, Eigen::Ref<const Eigen::
         W(1, 2) *= -1;
         W(2, 2) *= -1;
     }
-    // calculate derivatives
-    double s0 = S(0), s1 = S(1), s2 = S(2);
+    // calculate derivatives of psi
+    // cloth has constant thickness, so principle stretch s2 (in normal direction) is 1
+    double s0 = S(0), s1 = S(1), s2 = 1.;
     Eigen::Matrix3d dpsi_ds = Eigen::Matrix3d::Zero();
     dpsi_ds(0, 0) = lambda * (s0 + s1 + s2 - 3.) + mu * 2 * (s0 - 1.);
     dpsi_ds(1, 1) = lambda * (s0 + s1 + s2 - 3.) + mu * 2 * (s1 - 1.);
-    dpsi_ds(2, 2) = lambda * (s0 + s1 + s2 - 3.) + mu * 2 * (s2 - 1.);
-    Eigen::Matrix3d d2psi_ds2;
-    d2psi_ds2 << lambda + mu * 2., lambda, lambda,
-            lambda, lambda + mu * 2., lambda,
-            lambda, lambda, lambda + mu * 2.;
+    dpsi_ds(2, 2) = 0;  // cloth has constant thickness, so principle stretch in normal direction is constant
+    Eigen::Matrix3d d2psi_ds2;  // since s2 is constant, its derivative is 0
+    // third row and third column of d2psi/ds2 are partial derivatives involving s2, so they are also 0
+    d2psi_ds2 << lambda + mu * 2., lambda, 0,
+            lambda, lambda + mu * 2., 0,
+            0, 0, 0;
     // compute d2psi_dF2 based on formula from lecture
     Eigen::Matrix99d d2psi_dF2 = Eigen::Matrix99d::Zero();
     for (int i = 0; i < 3; i++) {
         for (int j = 0; j < 3; j++) {
             Eigen::Vector3d delta_s_vector = d2psi_ds2 * dS[i][j];
-            d2psi_dF2.block<3, 3>(i * 3, j * 3) = dU[i][j] * dpsi_ds * W.transpose()
-                                                  + U * delta_s_vector.asDiagonal() * W.transpose()
-                                                  + U * dpsi_ds * dW[i][j].transpose();
+            // calculate current entry in hessian, and flatten row-wise
+            Eigen::Matrix3d curr_row = dU[i][j] * dpsi_ds * W.transpose()
+                                       + U * delta_s_vector.asDiagonal() * W.transpose()
+                                       + U * dpsi_ds * dW[i][j].transpose();
+            curr_row.transposeInPlace();
+            d2psi_dF2.row(3 * i + j) = Eigen::Map<Eigen::Matrix<double, 1, 9>>(curr_row.data());
         }
     }
 

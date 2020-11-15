@@ -63,11 +63,12 @@ void dV_membrane_corotational_dq(Eigen::Vector9d &dV, Eigen::Ref<const Eigen::Ve
     }
 
     // calculate dpsi_dF using singular value decomposition derivative formula
-    double s0 = S(0), s1 = S(1), s2 = S(2);
+    // cloth has constant thickness, so principle stretch s2 (in normal direction) is 1
+    double s0 = S(0), s1 = S(1), s2 = 1.;
     Eigen::Matrix3d dpsi_ds = Eigen::Matrix3d::Zero();
     dpsi_ds(0, 0) = lambda * (s0 + s1 + s2 - 3.) + mu * 2 * (s0 - 1.);
     dpsi_ds(1, 1) = lambda * (s0 + s1 + s2 - 3.) + mu * 2 * (s1 - 1.);
-    dpsi_ds(2, 2) = lambda * (s0 + s1 + s2 - 3.) + mu * 2 * (s2 - 1.);
+    dpsi_ds(2, 2) = 0;  // since s2 is constant, its derivative is 0
     Eigen::Matrix3d dpsi_dF = U * dpsi_ds * W.transpose();
     // flatten dpsi_dF row wise
     Eigen::Vector9d dpsi_vector;
